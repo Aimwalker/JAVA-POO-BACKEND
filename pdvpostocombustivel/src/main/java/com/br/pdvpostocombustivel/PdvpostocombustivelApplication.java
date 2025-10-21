@@ -20,7 +20,7 @@ import io.swagger.v3.oas.annotations.servers.Server;
                 license = @License(name = "v1")
         ),
         servers = {
-                @Server(url = "http://localhost:5555", description = "Ambiente Local")
+                @Server(url = "http://localhost:8080", description = "Ambiente Local")
         }
 )
 public class PdvpostocombustivelApplication {

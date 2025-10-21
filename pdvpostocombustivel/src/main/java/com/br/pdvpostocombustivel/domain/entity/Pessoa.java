@@ -5,7 +5,11 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
+import java.io.Serial;
+import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.Objects;
 
 @Entity
 @Table(
@@ -14,7 +18,11 @@ import java.time.LocalDate;
                 @UniqueConstraint(name = "uk_pessoas_cpf_cnpj", columnNames = "cpf_cnpj")
         }
 )
-public class Pessoa {
+@Inheritance(strategy = InheritanceType.JOINED)
+public abstract class Pessoa implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,6 +38,9 @@ public class Pessoa {
     @Size(max = 20)
     @Column(name = "cpf_cnpj", nullable = false, length = 20, unique = true)
     private String cpfCnpj;
+
+    @Column(unique = true) // Adicionando o campo de email
+    private String email;
 
     // CTPS numérico; sem 'length' (não se aplica a Long)
     @Column(name = "numero_ctps")
@@ -70,6 +81,9 @@ public class Pessoa {
     public String getCpfCnpj() { return cpfCnpj; }
     public void setCpfCnpj(String cpfCnpj) { this.cpfCnpj = cpfCnpj; }
 
+    public String getEmail() { return email; } // Adicionando getter
+    public void setEmail(String email) { this.email = email; } // Adicionando setter
+
     public Long getNumeroCtps() { return numeroCtps; }
     public void setNumeroCtps(Long numeroCtps) { this.numeroCtps = numeroCtps; }
 
@@ -78,4 +92,17 @@ public class Pessoa {
 
     public TipoPessoa getTipoPessoa() { return tipoPessoa; }
     public void setTipoPessoa(TipoPessoa tipoPessoa) { this.tipoPessoa = tipoPessoa; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Pessoa pessoa = (Pessoa) o;
+        return Objects.equals(id, pessoa.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }
