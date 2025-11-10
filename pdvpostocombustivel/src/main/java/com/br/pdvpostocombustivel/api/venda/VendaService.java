@@ -105,16 +105,28 @@ public class VendaService {
                 .collect(Collectors.toList());
     }
 
+    // NOVO MÉTODO: EMITIR CUPOM FISCAL
+    @Transactional(readOnly = true)
+    public String emitirCupomFiscal(Long vendaId) {
+        Venda venda = vendaRepository.findById(vendaId)
+                .orElseThrow(() -> new IllegalArgumentException("Venda não encontrada com o ID: " + vendaId));
+
+        return gerarCupom(venda, "CUPOM FISCAL");
+    }
+
     // MÉTODO: REEMITIR CUPOM FISCAL
     @Transactional(readOnly = true)
     public String reemitirCupomFiscal(Long vendaId) {
         Venda venda = vendaRepository.findById(vendaId)
                 .orElseThrow(() -> new IllegalArgumentException("Venda não encontrada com o ID: " + vendaId));
 
-        // Lógica simulada para gerar o cupom fiscal
+        return gerarCupom(venda, "CUPOM FISCAL - REEMISSÃO");
+    }
+
+    private String gerarCupom(Venda venda, String titulo) {
         StringBuilder cupom = new StringBuilder();
         cupom.append("----------------------------------------\n");
-        cupom.append("        CUPOM FISCAL - REEMISSÃO        \n");
+        cupom.append(String.format("        %s        \n", titulo));
         cupom.append("----------------------------------------\n");
         cupom.append(String.format("VENDA ID: %d\n", venda.getId()));
         cupom.append(String.format("DATA: %s\n", venda.getData().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))));
@@ -125,15 +137,28 @@ public class VendaService {
         }
         cupom.append("----------------------------------------\n");
         cupom.append("ITENS:\n");
+
+        BigDecimal totalImpostos = BigDecimal.ZERO;
+
         for (ItemVenda item : venda.getItens()) {
             cupom.append(String.format("- %s (%.2f L/UN) x R$ %.2f = R$ %.2f\n",
                     item.getProduto().getNome(),
                     item.getQuantidade(),
                     item.getPrecoUnitario(),
                     item.getSubtotal()));
+
+            // Calcula os impostos para o item
+            if (item.getProduto().getAliquotaIcms() != null && item.getProduto().getAliquotaPisCofins() != null) {
+                BigDecimal quantidade = BigDecimal.valueOf(item.getQuantidade());
+                BigDecimal impostoIcms = item.getProduto().getAliquotaIcms().multiply(quantidade);
+                BigDecimal impostoPisCofins = item.getProduto().getAliquotaPisCofins().multiply(quantidade);
+                totalImpostos = totalImpostos.add(impostoIcms).add(impostoPisCofins);
+            }
         }
         cupom.append("----------------------------------------\n");
         cupom.append(String.format("TOTAL: R$ %.2f\n", venda.getValorTotal()));
+        cupom.append("----------------------------------------\n");
+        cupom.append(String.format("Valor aprox. dos tributos: R$ %.2f (Fonte: IBPT)\n", totalImpostos));
         cupom.append("----------------------------------------\n");
         cupom.append("        OBRIGADO E VOLTE SEMPRE!        \n");
         cupom.append("----------------------------------------\n");

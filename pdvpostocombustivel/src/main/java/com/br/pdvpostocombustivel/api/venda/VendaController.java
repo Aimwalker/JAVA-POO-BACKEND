@@ -47,6 +47,13 @@ public class VendaController {
         return ResponseEntity.ok(vendas);
     }
 
+    // NOVO ENDPOINT: Emissão de Cupom Fiscal
+    @GetMapping("/{id}/emitir-cupom")
+    public ResponseEntity<String> emitirCupom(@PathVariable Long id) {
+        String cupom = vendaService.emitirCupomFiscal(id);
+        return ResponseEntity.ok(cupom);
+    }
+
     // ENDPOINT: Reemissão de Cupom Fiscal
     @GetMapping("/{id}/reemitir-cupom")
     public ResponseEntity<String> reemitirCupom(@PathVariable Long id) {

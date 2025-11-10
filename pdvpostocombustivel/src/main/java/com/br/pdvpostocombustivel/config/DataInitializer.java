@@ -23,7 +23,7 @@ public class DataInitializer implements CommandLineRunner {
     private final ProdutoRepository produtoRepository;
     private final TanqueRepository tanqueRepository;
     private final BombaRepository bombaRepository;
-    private final CaixaRepository caixaRepository; // Novo repositório
+    private final CaixaRepository caixaRepository;
 
     public DataInitializer(AcessoRepository acessoRepository, FuncionarioRepository funcionarioRepository, ProdutoRepository produtoRepository, TanqueRepository tanqueRepository, BombaRepository bombaRepository, CaixaRepository caixaRepository) {
         this.acessoRepository = acessoRepository;
@@ -81,6 +81,8 @@ public class DataInitializer implements CommandLineRunner {
             gasolinaComum.setPrecoVenda(new BigDecimal("5.59"));
             gasolinaComum.setTipo(TipoProduto.COMBUSTIVEL);
             gasolinaComum.setEstoqueAtual(20000.0);
+            gasolinaComum.setAliquotaIcms(new BigDecimal("1.3721"));
+            gasolinaComum.setAliquotaPisCofins(new BigDecimal("0.7925"));
             produtoRepository.save(gasolinaComum);
 
             Produto gasolinaAditivada = new Produto();
@@ -89,6 +91,8 @@ public class DataInitializer implements CommandLineRunner {
             gasolinaAditivada.setPrecoVenda(new BigDecimal("5.79"));
             gasolinaAditivada.setTipo(TipoProduto.COMBUSTIVEL);
             gasolinaAditivada.setEstoqueAtual(15000.0);
+            gasolinaAditivada.setAliquotaIcms(new BigDecimal("1.3721"));
+            gasolinaAditivada.setAliquotaPisCofins(new BigDecimal("0.7925"));
             produtoRepository.save(gasolinaAditivada);
 
             Produto etanolComum = new Produto();
@@ -97,6 +101,8 @@ public class DataInitializer implements CommandLineRunner {
             etanolComum.setPrecoVenda(new BigDecimal("3.99"));
             etanolComum.setTipo(TipoProduto.COMBUSTIVEL);
             etanolComum.setEstoqueAtual(18000.0);
+            etanolComum.setAliquotaIcms(new BigDecimal("1.3721"));
+            etanolComum.setAliquotaPisCofins(new BigDecimal("0.1339"));
             produtoRepository.save(etanolComum);
 
             Produto dieselS500 = new Produto();
@@ -105,6 +111,8 @@ public class DataInitializer implements CommandLineRunner {
             dieselS500.setPrecoVenda(new BigDecimal("4.89"));
             dieselS500.setTipo(TipoProduto.COMBUSTIVEL);
             dieselS500.setEstoqueAtual(25000.0);
+            dieselS500.setAliquotaIcms(new BigDecimal("1.06")); // Valor aproximado para Diesel
+            dieselS500.setAliquotaPisCofins(new BigDecimal("0.35")); // Valor aproximado para Diesel
             produtoRepository.save(dieselS500);
 
             Produto dieselS10 = new Produto();
@@ -113,6 +121,8 @@ public class DataInitializer implements CommandLineRunner {
             dieselS10.setPrecoVenda(new BigDecimal("5.09"));
             dieselS10.setTipo(TipoProduto.COMBUSTIVEL);
             dieselS10.setEstoqueAtual(22000.0);
+            dieselS10.setAliquotaIcms(new BigDecimal("1.06")); // Valor aproximado para Diesel
+            dieselS10.setAliquotaPisCofins(new BigDecimal("0.35")); // Valor aproximado para Diesel
             produtoRepository.save(dieselS10);
 
             // Conveniência

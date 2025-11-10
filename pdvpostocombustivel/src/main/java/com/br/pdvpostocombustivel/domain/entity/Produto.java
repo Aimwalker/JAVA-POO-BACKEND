@@ -38,6 +38,10 @@ public class Produto implements Serializable {
 
     private Double estoqueAtual;
 
+    // Novos campos para alíquotas de impostos (ad rem - valor fixo por unidade)
+    private BigDecimal aliquotaIcms;
+    private BigDecimal aliquotaPisCofins;
+
     public Produto() {
     }
 
@@ -105,6 +109,22 @@ public class Produto implements Serializable {
 
     public void setEstoqueAtual(Double estoqueAtual) {
         this.estoqueAtual = estoqueAtual;
+    }
+
+    public BigDecimal getAliquotaIcms() {
+        return aliquotaIcms;
+    }
+
+    public void setAliquotaIcms(BigDecimal aliquotaIcms) {
+        this.aliquotaIcms = aliquotaIcms;
+    }
+
+    public BigDecimal getAliquotaPisCofins() {
+        return aliquotaPisCofins;
+    }
+
+    public void setAliquotaPisCofins(BigDecimal aliquotaPisCofins) {
+        this.aliquotaPisCofins = aliquotaPisCofins;
     }
 
     @Override
