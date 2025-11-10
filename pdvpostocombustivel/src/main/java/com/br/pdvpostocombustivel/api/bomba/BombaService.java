@@ -27,8 +27,8 @@ public class BombaService {
     // CREATE
     @Transactional
     public BombaResponse create(BombaRequest req) {
-        if (bombaRepository.existsByNumero(req.numero())) {
-            throw new DataIntegrityViolationException("Número de bomba já cadastrado: " + req.numero());
+        if (bombaRepository.existsByNumeroBombaFisicaAndNumeroBico(req.numeroBombaFisica(), req.numeroBico())) {
+            throw new DataIntegrityViolationException("Bomba física " + req.numeroBombaFisica() + " já possui bico " + req.numeroBico() + " cadastrado.");
         }
         Bomba novaBomba = toEntity(new Bomba(), req);
         Bomba bombaSalva = bombaRepository.save(novaBomba);
@@ -53,8 +53,10 @@ public class BombaService {
         Bomba b = bombaRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Bomba não encontrada. id=" + id));
 
-        if (!b.getNumero().equals(req.numero()) && bombaRepository.existsByNumero(req.numero())) {
-            throw new DataIntegrityViolationException("Número de bomba já cadastrado: " + req.numero());
+        // Valida a unicidade se o número da bomba física ou do bico for alterado
+        if ((!b.getNumeroBombaFisica().equals(req.numeroBombaFisica()) || !b.getNumeroBico().equals(req.numeroBico())) &&
+                bombaRepository.existsByNumeroBombaFisicaAndNumeroBico(req.numeroBombaFisica(), req.numeroBico())) {
+            throw new DataIntegrityViolationException("Bomba física " + req.numeroBombaFisica() + " já possui bico " + req.numeroBico() + " cadastrado.");
         }
 
         Bomba bombaAtualizada = toEntity(b, req);
@@ -77,7 +79,8 @@ public class BombaService {
         Tanque tanque = tanqueRepository.findById(req.tanqueId())
                 .orElseThrow(() -> new IllegalArgumentException("Tanque não encontrado. id=" + req.tanqueId()));
 
-        b.setNumero(req.numero());
+        b.setNumeroBombaFisica(req.numeroBombaFisica());
+        b.setNumeroBico(req.numeroBico());
         b.setTanque(tanque);
         b.setStatus(req.status());
         return b;
@@ -86,7 +89,8 @@ public class BombaService {
     private BombaResponse toResponse(Bomba b) {
         return new BombaResponse(
                 b.getId(),
-                b.getNumero(),
+                b.getNumeroBombaFisica(),
+                b.getNumeroBico(),
                 b.getTanque().getId(),
                 b.getTanque().getCombustivel().getId(),
                 b.getTanque().getCombustivel().getNome(),

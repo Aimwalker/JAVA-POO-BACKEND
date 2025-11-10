@@ -8,7 +8,9 @@ import java.io.Serializable;
 import java.util.Objects;
 
 @Entity
-@Table(name = "tb_bomba")
+@Table(name = "tb_bomba", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_bomba_fisica_bico", columnNames = {"numero_bomba_fisica", "numero_bico"})
+})
 public class Bomba implements Serializable {
 
     @Serial
@@ -18,8 +20,11 @@ public class Bomba implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
-    private Integer numero;
+    @Column(name = "numero_bomba_fisica", nullable = false)
+    private Integer numeroBombaFisica; // Identifica a bomba física (ex: Bomba 1, Bomba 2)
+
+    @Column(name = "numero_bico", nullable = false)
+    private Integer numeroBico; // Identifica o bico dentro da bomba física (ex: Bico 1, Bico 2)
 
     @ManyToOne
     @JoinColumn(name = "tanque_id", nullable = false)
@@ -42,12 +47,20 @@ public class Bomba implements Serializable {
         this.id = id;
     }
 
-    public Integer getNumero() {
-        return numero;
+    public Integer getNumeroBombaFisica() {
+        return numeroBombaFisica;
     }
 
-    public void setNumero(Integer numero) {
-        this.numero = numero;
+    public void setNumeroBombaFisica(Integer numeroBombaFisica) {
+        this.numeroBombaFisica = numeroBombaFisica;
+    }
+
+    public Integer getNumeroBico() {
+        return numeroBico;
+    }
+
+    public void setNumeroBico(Integer numeroBico) {
+        this.numeroBico = numeroBico;
     }
 
     public Tanque getTanque() {

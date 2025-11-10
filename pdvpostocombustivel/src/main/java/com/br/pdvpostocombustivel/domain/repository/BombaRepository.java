@@ -7,5 +7,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface BombaRepository extends JpaRepository<Bomba, Long> {
 
-    boolean existsByNumero(Integer numero);
+    boolean existsByNumeroBombaFisicaAndNumeroBico(Integer numeroBombaFisica, Integer numeroBico);
 }

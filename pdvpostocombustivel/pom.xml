@@ -26,13 +26,6 @@
 
     <dependencies>
 
-
-        <!--Spring Boot Starter Security -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId>
-        </dependency>
-
         <!-- Web + JSON -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -90,6 +83,23 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <includes>
+                    <include>application.properties</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <excludes>
+                    <exclude>application.properties</exclude>
+                </excludes>
+            </resource>
+        </resources>
+
         <plugins>
             <!-- Garante compilação em release 17 e passa parâmetros (útil p/ reflection) -->
             <plugin>

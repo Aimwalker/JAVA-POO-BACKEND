@@ -1,18 +1,24 @@
 package com.br.pdvpostocombustivel.api.venda;
 
+import com.br.pdvpostocombustivel.api.venda.dto.ItemVendaFuncionarioResponse;
 import com.br.pdvpostocombustivel.api.venda.dto.ItemVendaResponse;
+import com.br.pdvpostocombustivel.api.venda.dto.VendaFuncionarioResponse;
 import com.br.pdvpostocombustivel.api.venda.dto.VendaRequest;
 import com.br.pdvpostocombustivel.api.venda.dto.VendaResponse;
 import com.br.pdvpostocombustivel.domain.entity.*;
 import com.br.pdvpostocombustivel.domain.repository.*;
 import com.br.pdvpostocombustivel.enums.FormaPagamento;
+import com.br.pdvpostocombustivel.enums.StatusCaixa;
 import com.br.pdvpostocombustivel.enums.StatusVenda;
 import com.br.pdvpostocombustivel.enums.TipoMovimento;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,23 +30,31 @@ public class VendaService {
     private final FuncionarioRepository funcionarioRepository;
     private final ProdutoRepository produtoRepository;
     private final ClienteRepository clienteRepository;
+    private final MovimentoContaClienteRepository movimentoContaClienteRepository;
+    private final CaixaRepository caixaRepository;
 
-    public VendaService(VendaRepository vendaRepository, FuncionarioRepository funcionarioRepository, ProdutoRepository produtoRepository, ClienteRepository clienteRepository) {
+    public VendaService(VendaRepository vendaRepository, FuncionarioRepository funcionarioRepository, ProdutoRepository produtoRepository, ClienteRepository clienteRepository, MovimentoContaClienteRepository movimentoContaClienteRepository, CaixaRepository caixaRepository) {
         this.vendaRepository = vendaRepository;
         this.funcionarioRepository = funcionarioRepository;
         this.produtoRepository = produtoRepository;
         this.clienteRepository = clienteRepository;
+        this.movimentoContaClienteRepository = movimentoContaClienteRepository;
+        this.caixaRepository = caixaRepository;
     }
 
     public VendaResponse create(VendaRequest req) {
         Funcionario funcionario = funcionarioRepository.findById(req.funcionarioId())
                 .orElseThrow(() -> new IllegalArgumentException("Funcionário não encontrado com o ID: " + req.funcionarioId()));
 
+        Caixa caixaAberto = caixaRepository.findByStatus(StatusCaixa.ABERTO)
+                .orElseThrow(() -> new IllegalStateException("Nenhum caixa aberto encontrado. Não é possível registrar vendas."));
+
         Venda novaVenda = new Venda();
         novaVenda.setFuncionario(funcionario);
         novaVenda.setData(LocalDateTime.now());
         novaVenda.setFormaPagamento(req.formaPagamento());
         novaVenda.setStatus(StatusVenda.FINALIZADA);
+        novaVenda.setCaixa(caixaAberto);
 
         List<ItemVenda> itensVenda = req.itens().stream().map(itemReq -> {
             Produto produto = produtoRepository.findById(itemReq.produtoId())
@@ -61,14 +75,73 @@ public class VendaService {
         novaVenda.setValorTotal(valorTotal);
 
         if (req.formaPagamento() == FormaPagamento.CONTA_CLIENTE) {
-            processarVendaContaCliente(req, novaVenda, valorTotal);
+            processarVendaContaClientePreSave(req, novaVenda, valorTotal);
         }
 
         Venda vendaSalva = vendaRepository.save(novaVenda);
+
+        if (req.formaPagamento() == FormaPagamento.CONTA_CLIENTE) {
+            criarMovimentoContaClientePostSave(vendaSalva, valorTotal);
+        }
+
         return toResponse(vendaSalva);
     }
 
-    private void processarVendaContaCliente(VendaRequest req, Venda novaVenda, BigDecimal valorTotal) {
+    // NOVO MÉTODO: LISTAR TODAS AS VENDAS (PAGINADO)
+    @Transactional(readOnly = true)
+    public Page<VendaResponse> listAll(Pageable pageable) {
+        return vendaRepository.findAll(pageable).map(this::toResponse);
+    }
+
+    // MÉTODO: BUSCAR VENDAS POR FUNCIONÁRIO
+    @Transactional(readOnly = true)
+    public List<VendaFuncionarioResponse> getVendasByFuncionarioId(Long funcionarioId) {
+        funcionarioRepository.findById(funcionarioId)
+                .orElseThrow(() -> new IllegalArgumentException("Funcionário não encontrado com o ID: " + funcionarioId));
+
+        List<Venda> vendas = vendaRepository.findByFuncionarioId(funcionarioId);
+        return vendas.stream()
+                .map(this::toVendaFuncionarioResponse)
+                .collect(Collectors.toList());
+    }
+
+    // MÉTODO: REEMITIR CUPOM FISCAL
+    @Transactional(readOnly = true)
+    public String reemitirCupomFiscal(Long vendaId) {
+        Venda venda = vendaRepository.findById(vendaId)
+                .orElseThrow(() -> new IllegalArgumentException("Venda não encontrada com o ID: " + vendaId));
+
+        // Lógica simulada para gerar o cupom fiscal
+        StringBuilder cupom = new StringBuilder();
+        cupom.append("----------------------------------------\n");
+        cupom.append("        CUPOM FISCAL - REEMISSÃO        \n");
+        cupom.append("----------------------------------------\n");
+        cupom.append(String.format("VENDA ID: %d\n", venda.getId()));
+        cupom.append(String.format("DATA: %s\n", venda.getData().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))));
+        cupom.append(String.format("FUNCIONÁRIO: %s\n", venda.getFuncionario().getNomeCompleto()));
+        cupom.append(String.format("FORMA PGTO: %s\n", venda.getFormaPagamento()));
+        if (venda.getCliente() != null) {
+            cupom.append(String.format("CLIENTE: %s (ID: %d)\n", venda.getCliente().getNomeCompleto(), venda.getCliente().getId()));
+        }
+        cupom.append("----------------------------------------\n");
+        cupom.append("ITENS:\n");
+        for (ItemVenda item : venda.getItens()) {
+            cupom.append(String.format("- %s (%.2f L/UN) x R$ %.2f = R$ %.2f\n",
+                    item.getProduto().getNome(),
+                    item.getQuantidade(),
+                    item.getPrecoUnitario(),
+                    item.getSubtotal()));
+        }
+        cupom.append("----------------------------------------\n");
+        cupom.append(String.format("TOTAL: R$ %.2f\n", venda.getValorTotal()));
+        cupom.append("----------------------------------------\n");
+        cupom.append("        OBRIGADO E VOLTE SEMPRE!        \n");
+        cupom.append("----------------------------------------\n");
+
+        return cupom.toString();
+    }
+
+    private void processarVendaContaClientePreSave(VendaRequest req, Venda novaVenda, BigDecimal valorTotal) {
         if (req.clienteId() == null) {
             throw new IllegalArgumentException("O ID do cliente é obrigatório para vendas em conta.");
         }
@@ -84,16 +157,18 @@ public class VendaService {
         }
 
         conta.setSaldo(saldoDevedor.add(valorTotal));
+        novaVenda.setCliente(cliente);
+    }
 
+    private void criarMovimentoContaClientePostSave(Venda vendaSalva, BigDecimal valorTotal) {
+        ContaCliente conta = vendaSalva.getCliente().getContaCliente();
         MovimentoContaCliente movimento = new MovimentoContaCliente();
         movimento.setContaCliente(conta);
         movimento.setTipo(TipoMovimento.DEBITO);
         movimento.setValor(valorTotal);
         movimento.setDataHora(LocalDateTime.now());
-        movimento.setDescricao("Venda ID: " + novaVenda.getId()); // O ID da venda será nulo aqui, mas o JPA preencherá após salvar.
-        conta.getHistoricoTransacoes().add(movimento);
-
-        novaVenda.setCliente(cliente);
+        movimento.setDescricao("Venda ID: " + vendaSalva.getId());
+        movimentoContaClienteRepository.save(movimento);
     }
 
     private VendaResponse toResponse(Venda venda) {
@@ -114,6 +189,33 @@ public class VendaService {
                 venda.getFuncionario().getNomeCompleto(),
                 venda.getCliente() != null ? venda.getCliente().getId() : null,
                 venda.getCliente() != null ? venda.getCliente().getNomeCompleto() : null,
+                venda.getCaixa().getId(),
+                venda.getFormaPagamento(),
+                venda.getStatus(),
+                itensResponse
+        );
+    }
+
+    // Helper para converter Venda para VendaFuncionarioResponse
+    private VendaFuncionarioResponse toVendaFuncionarioResponse(Venda venda) {
+        List<ItemVendaFuncionarioResponse> itensResponse = venda.getItens().stream()
+                .map(item -> new ItemVendaFuncionarioResponse(
+                        item.getProduto().getId(),
+                        item.getProduto().getNome(),
+                        item.getQuantidade(),
+                        item.getPrecoUnitario(),
+                        item.getSubtotal()
+                )).collect(Collectors.toList());
+
+        return new VendaFuncionarioResponse(
+                venda.getId(),
+                venda.getData(),
+                venda.getValorTotal(),
+                venda.getFuncionario().getId(),
+                venda.getFuncionario().getNomeCompleto(),
+                venda.getCliente() != null ? venda.getCliente().getId() : null,
+                venda.getCliente() != null ? venda.getCliente().getNomeCompleto() : null,
+                venda.getCaixa().getId(),
                 venda.getFormaPagamento(),
                 venda.getStatus(),
                 itensResponse

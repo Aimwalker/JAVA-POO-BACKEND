@@ -10,6 +10,7 @@ public record ClienteRequest(
         String nomeCompleto,
         String cpfCnpj,
         String email,
+        String telefone, // Novo campo
         LocalDate dataNascimento,
         TipoPessoa tipoPessoa,
 

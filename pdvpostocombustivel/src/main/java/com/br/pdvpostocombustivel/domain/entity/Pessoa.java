@@ -39,8 +39,10 @@ public abstract class Pessoa implements Serializable {
     @Column(name = "cpf_cnpj", nullable = false, length = 20, unique = true)
     private String cpfCnpj;
 
-    @Column(unique = true) // Adicionando o campo de email
+    @Column(unique = true)
     private String email;
+
+    private String telefone; // Novo campo
 
     // CTPS numérico; sem 'length' (não se aplica a Long)
     @Column(name = "numero_ctps")
@@ -81,8 +83,11 @@ public abstract class Pessoa implements Serializable {
     public String getCpfCnpj() { return cpfCnpj; }
     public void setCpfCnpj(String cpfCnpj) { this.cpfCnpj = cpfCnpj; }
 
-    public String getEmail() { return email; } // Adicionando getter
-    public void setEmail(String email) { this.email = email; } // Adicionando setter
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public String getTelefone() { return telefone; } // Novo getter
+    public void setTelefone(String telefone) { this.telefone = telefone; } // Novo setter
 
     public Long getNumeroCtps() { return numeroCtps; }
     public void setNumeroCtps(Long numeroCtps) { this.numeroCtps = numeroCtps; }

@@ -4,8 +4,12 @@ import com.br.pdvpostocombustivel.domain.entity.Funcionario;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface FuncionarioRepository extends JpaRepository<Funcionario, Long> {
 
     boolean existsByCpfCnpj(String cpfCnpj);
+
+    Optional<Funcionario> findByEmail(String email);
 }

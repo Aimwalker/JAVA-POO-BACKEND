@@ -59,7 +59,7 @@ public class AbastecimentoService {
         return new AbastecimentoResponse(
                 a.getId(),
                 a.getBomba().getId(),
-                a.getBomba().getNumero(),
+                a.getBomba().getNumeroBombaFisica(), // CORRIGIDO AQUI
                 combustivel.getId(),
                 combustivel.getNome(),
                 a.getLitrosAbastecidos(),

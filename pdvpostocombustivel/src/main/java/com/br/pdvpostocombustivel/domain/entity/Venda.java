@@ -2,6 +2,7 @@ package com.br.pdvpostocombustivel.domain.entity;
 
 import com.br.pdvpostocombustivel.enums.FormaPagamento;
 import com.br.pdvpostocombustivel.enums.StatusVenda;
+import com.fasterxml.jackson.annotation.JsonFormat; // Importar esta anotação
 import jakarta.persistence.*;
 
 import java.io.Serial;
@@ -23,6 +24,7 @@ public class Venda implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss") // Força o formato de serialização
     @Column(nullable = false)
     private LocalDateTime data;
 
@@ -36,6 +38,10 @@ public class Venda implements Serializable {
     @ManyToOne
     @JoinColumn(name = "cliente_id") // Nulo se não for venda para cliente
     private Cliente cliente;
+
+    @ManyToOne
+    @JoinColumn(name = "caixa_id", nullable = false) // Nova associação
+    private Caixa caixa;
 
     @Enumerated(EnumType.STRING)
     private FormaPagamento formaPagamento;
@@ -90,6 +96,14 @@ public class Venda implements Serializable {
 
     public void setCliente(Cliente cliente) {
         this.cliente = cliente;
+    }
+
+    public Caixa getCaixa() {
+        return caixa;
+    }
+
+    public void setCaixa(Caixa caixa) {
+        this.caixa = caixa;
     }
 
     public FormaPagamento getFormaPagamento() {

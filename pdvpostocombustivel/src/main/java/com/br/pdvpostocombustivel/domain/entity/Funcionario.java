@@ -8,7 +8,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "tb_funcionario")
-@PrimaryKeyJoinColumn(name = "id") // Chave primária da tabela tb_funcionario será a mesma da tb_pessoa
+@PrimaryKeyJoinColumn(name = "id")
 public class Funcionario extends Pessoa {
 
     @Serial
@@ -26,6 +26,7 @@ public class Funcionario extends Pessoa {
     public Funcionario() {
     }
 
+    // Getters e Setters
     public String getSenha() {
         return senha;
     }

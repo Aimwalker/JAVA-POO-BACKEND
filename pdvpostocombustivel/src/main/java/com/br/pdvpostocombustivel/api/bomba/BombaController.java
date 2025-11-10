@@ -30,7 +30,7 @@ public class BombaController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<BombaResponse>> list(@PageableDefault(size = 10, sort = "numero") Pageable pageable) {
+    public ResponseEntity<Page<BombaResponse>> list(@PageableDefault(size = 10, sort = {"numeroBombaFisica", "numeroBico"}) Pageable pageable) { // CORRIGIDO AQUI
         Page<BombaResponse> page = bombaService.list(pageable);
         return ResponseEntity.ok(page);
     }
