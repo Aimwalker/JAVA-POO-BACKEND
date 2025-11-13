@@ -2,9 +2,11 @@ package com.br.pdvpostocombustivel.api.funcionario;
 
 import com.br.pdvpostocombustivel.api.funcionario.dto.FuncionarioRequest;
 import com.br.pdvpostocombustivel.api.funcionario.dto.FuncionarioResponse;
+import com.br.pdvpostocombustivel.api.funcionario.dto.RegistroRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -19,6 +21,13 @@ public class FuncionarioController {
 
     public FuncionarioController(FuncionarioService funcionarioService) {
         this.funcionarioService = funcionarioService;
+    }
+
+    // NOVO ENDPOINT PÚBLICO PARA REGISTRO
+    @PostMapping("/registrar")
+    public ResponseEntity<Void> registrarNovoUsuario(@RequestBody RegistroRequest request) {
+        funcionarioService.registrar(request);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PostMapping

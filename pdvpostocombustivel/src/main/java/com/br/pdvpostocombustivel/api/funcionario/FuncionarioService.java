@@ -2,16 +2,19 @@ package com.br.pdvpostocombustivel.api.funcionario;
 
 import com.br.pdvpostocombustivel.api.funcionario.dto.FuncionarioRequest;
 import com.br.pdvpostocombustivel.api.funcionario.dto.FuncionarioResponse;
+import com.br.pdvpostocombustivel.api.funcionario.dto.RegistroRequest;
 import com.br.pdvpostocombustivel.domain.entity.Acesso;
 import com.br.pdvpostocombustivel.domain.entity.Funcionario;
 import com.br.pdvpostocombustivel.domain.repository.AcessoRepository;
 import com.br.pdvpostocombustivel.domain.repository.FuncionarioRepository;
+import com.br.pdvpostocombustivel.enums.TipoPessoa;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.stream.Collectors;
 import java.util.Set;
 
@@ -25,6 +28,32 @@ public class FuncionarioService {
     public FuncionarioService(FuncionarioRepository funcionarioRepository, AcessoRepository acessoRepository) {
         this.funcionarioRepository = funcionarioRepository;
         this.acessoRepository = acessoRepository;
+    }
+
+    // REGISTRAR NOVO USUÁRIO
+    @Transactional
+    public void registrar(RegistroRequest req) {
+        if (funcionarioRepository.findByEmail(req.email()).isPresent()) {
+            throw new IllegalStateException("E-mail já cadastrado.");
+        }
+        if (funcionarioRepository.existsByCpfCnpj(req.cpfCnpj())) {
+            throw new DataIntegrityViolationException("CPF/CNPJ já cadastrado: " + req.cpfCnpj());
+        }
+
+        Funcionario novoFuncionario = new Funcionario();
+        novoFuncionario.setNomeCompleto(req.nomeCompleto());
+        novoFuncionario.setEmail(req.email());
+        novoFuncionario.setSenha(req.senha()); // Senha em texto puro, por enquanto
+        novoFuncionario.setCpfCnpj(req.cpfCnpj());
+        novoFuncionario.setDataNascimento(LocalDate.parse(req.dataNascimento()));
+        novoFuncionario.setTipoPessoa(TipoPessoa.valueOf(req.tipoPessoa()));
+
+        // Atribui o papel de "FUNCIONARIO" por padrão
+        Acesso acessoFuncionario = acessoRepository.findByDescricao("ROLE_FUNCIONARIO")
+                .orElseThrow(() -> new IllegalStateException("Acesso ROLE_FUNCIONARIO não encontrado. Execute o DataInitializer."));
+        novoFuncionario.setAcessos(Set.of(acessoFuncionario));
+
+        funcionarioRepository.save(novoFuncionario);
     }
 
     // CREATE
